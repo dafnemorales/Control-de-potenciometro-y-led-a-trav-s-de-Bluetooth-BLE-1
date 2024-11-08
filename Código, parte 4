@@ -1,0 +1,91 @@
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLE2902.h>  
+
+const int ledPin = 4;  // pin del LED
+
+// UUID para el servicio y la característica
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+// Declaración de objetos BLE
+BLEServer* pServer = NULL;
+BLECharacteristic* pCharacteristic = NULL;
+bool deviceConnected = false;
+
+// Clase que maneja la conexión del servidor BLE
+class MyServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) {
+    deviceConnected = true;
+    Serial.println("Dispositivo conectado");
+  }
+
+  void onDisconnect(BLEServer* pServer) {
+    deviceConnected = false;
+    Serial.println("Dispositivo desconectado");
+  }
+};
+
+// Clase que maneja la escritura en la característica BLE
+class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic* pCharacteristic) {
+    std::string value = pCharacteristic->getValue();  // Lee valor de la caracte.
+    
+    if (value == "S" || value == "s") {  // Si el comando es 'S' o 's'
+      digitalWrite(ledPin, HIGH);  // Enciende el LED
+      Serial.println("LED encendido");
+    }
+    else if (value == "N" || value == "n") {  // Si el comando es 'N' o 'n'
+      digitalWrite(ledPin, LOW);  // Apaga el LED
+      Serial.println("LED apagado");
+    }
+  }
+};
+
+void setup() {
+  // Inicializa la comunicación serial
+  Serial.begin(115200);
+  // Configura el pin del LED como salida
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);  // Apaga el LED inicialmente
+
+  // Configura BLE
+  BLEDevice::init("ESP32_LED_Control");  // Nombre del dispositivo BLE
+  pServer = BLEDevice::createServer();
+  
+  // Configurando los callbacks de conexión y desconexión
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  // Crea el servicio BLE
+  BLEService* pService = pServer->createService(SERVICE_UUID);
+  
+  // Crea la característica BLE para recibir comandos
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_WRITE
+                    );
+  
+  //  callbacks para la característica
+  pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+
+  // descriptor BLE para notificaciones (opcional)
+  pCharacteristic->addDescriptor(new BLE2902());
+  
+  // Inicia el servicio BLE
+  pService->start();
+
+  // Inicia la publicidad de Bluetooth
+  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->start();
+  
+  Serial.println("Esperando conexión...");
+}
+
+void loop() {
+  //el dispositivo BLE esté conectado
+  if (deviceConnected) {
+  }
+  
+  delay(1000); // Retraso en el ciclo principal
+}
