@@ -1,0 +1,23 @@
+const int ledPin= 4; //definición del pin del led
+
+void setup() {
+  pinMode(ledPin, OUTPUT); //pin de LED como salida
+  Serial.begin(9600);  //
+  Serial.printIn("Escribe s para encender el LED o n para apagarlo")
+
+}
+
+void loop() {
+  if (Serial.aviable() > 0) {
+    char dato = Serial.read ();  //leer dato del puerto serial
+
+    if (dato == 'S'){
+      digitalWrite(ledPin, HIGH); // enciende led
+      Serial.printIn(" Led encendido ");
+    }
+    
+    else if (dato == 'N'){
+      digitalWrite(ledPin, LOW); // apaga led 
+    }
+  }
+}
