@@ -1,0 +1,15 @@
+const int Pot=35;
+int Signal = 0;
+float voltaje = 0.0;
+
+void setup() {
+  Serial.begin(115200);
+} 
+
+void loop(){
+  Signal=analogRead(Pot);
+  voltaje = Signal*3.3/4095;
+
+  Serial.printIn(voltaje);  //Imprime el valor leído y el voltaje calculado
+  
+delay(500); 
